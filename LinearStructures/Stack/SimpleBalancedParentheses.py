@@ -1,4 +1,4 @@
-from LinearStructures.Stack import Stack
+from LinearStructures.Stack.Stack import Stack
 
 def parChecker(symbolString):
     s = Stack()
