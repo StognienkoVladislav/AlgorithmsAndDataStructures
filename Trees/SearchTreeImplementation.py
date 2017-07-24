@@ -59,6 +59,20 @@ class BinarySearchTree:
     def __iter__(self):
         return self.root.__iter__()
 
+    """
+    Метод будет выполнять проверку на наличие корня дерева, а в случае отсутствия последнего
+    создавать объект TreeNode и устанавливать его, как корневой узел.
+    В противном случае put вызовет приватную рекурсивную вспомогательную функцию _put
+    для поиска места в дереве по следующему алгоритму:
+        Начиная от корня, проходим по двоичному дереву, сравнивая новый ключ с ключом текущего узла.
+        Если первый меньше второго, то идём в левое поддерево. Наоборот - в правое.
+
+        Когда не осталось левых или правых потомков для поиска - мы нашли позицию для установки нового узла.
+
+        Чтобы добавить узел в дерево, создаём новый объект TreeNode и помещаем его на
+        найденное за предыдущие шаги место.
+    """
+
     def put(self, key, val):
         if self.root:
             self._put(key, val, self.root)
@@ -135,6 +149,39 @@ class BinarySearchTree:
     def __setitem__(self, key, value):
         self.put(key, value)
 
+    """
+    Если у узла есть правый потомок, то преемник - наименьший ключ в правом поддереве.
+
+    Если у узла нет правого потомка и сам он - левый потомок родителя, то преемником будет родитель.
+
+    Если узел - правый потомок своего родителя и сам правого потомка не имеет,
+    то его преемником будет преемник родителя (исключая сам этот узел).
+    """
+
+    def findSuccessor(self):
+        succ = None
+        if self.hasRightChild():
+            succ = self.rightChild.findMin()
+
+        else:
+            if self.parent:
+                if self.isLeftChild():
+                    succ = self.parent
+
+                else:
+                    self.parent.rightChild = None
+                    succ = self.parent.findSuccessor()
+                    self.parent.rightChild = self
+
+        return succ
+
+    def findMin(self):
+        current = self
+        while current.hasLeftChild():
+            current = current.leftChild
+
+        return current
+
     def spliceOut(self):
         if self.isLeaf():
             if self.isLeftChild():
@@ -161,30 +208,6 @@ class BinarySearchTree:
 
                 self.rightChild.parent = self.parent
 
-    def findSuccessor(self):
-        succ = None
-        if self.hasRightChild():
-            succ = self.rightChild.findMin()
-
-        else:
-            if self.parent:
-                if self.isLeftChild():
-                    succ = self.parent
-
-                else:
-                    self.parent.rightChild = None
-                    succ = self.parent.findSuccessor()
-                    self.parent.rightChild = self
-
-        return succ
-
-    def findMin(self):
-        current = self
-        while current.hasLeftChild():
-            current = current.leftChild
-
-        return current
-
     def remove(self, currentNode):
         if currentNode.isLeaf():
             if currentNode == currentNode.parent.leftChild:
@@ -199,6 +222,17 @@ class BinarySearchTree:
             succ.spliceOut()
             currentNode.key = succ.key
             currentNode.payload = succ.payload
+
+            """
+            Если текущий узел - левый потомок, то нужно всего лишь обновить родительскую ссылку на него у предка,
+            а затем обновить ссылку его потомка, чтобы она указывала на нового родителя.
+
+            Если текущий узел - правый потомок, то мы обновляем родительскую ссылку его потомка,
+            чтобы она указывала на предка текущего узла, а затем - ссылку на правого потомка у родителя текущего узла.
+
+            Если текущий узел предка не имеет, то он должен быть корнем.
+            В этом случае мы просто заменяем данные key, payload, leftChild и rightChild,
+            вызвав для корня метод replaceNodeData."""
 
         else:           #This node has one child
             if currentNode.hasLeftChild():
